@@ -1,0 +1,254 @@
+<div class="container">
+
+  <!-- Header de la página -->
+  <div class="page-header">
+    <h1>Catálogo de plantillas</h1>
+    <p class="page-subtitle">
+      <span *ngIf="allProducts.length > 0">{{totalProducts}} plantillas disponibles</span>
+      <span *ngIf="allProducts.length === 0">Cargando plantillas...</span>
+      <span *ngIf="selectedCategory"> en <strong>{{getCategoryName(selectedCategory)}}</strong></span>
+    </p>
+  </div>
+
+  <!-- Switch de modo de navegación -->
+  <div class="navigation-mode-switch">
+    <button 
+      [class.active]="navigationMode === 'classic'" 
+      (click)="navigationMode = 'classic'"
+      class="mode-btn">
+      📋 Modo Clásico
+    </button>
+    <button 
+      [class.active]="navigationMode === 'assistant'" 
+      (click)="navigationMode = 'assistant'"
+      class="mode-btn">
+      🤖 Asistente de Compra
+    </button>
+  </div>
+
+  <!-- Modo Clásico -->
+  <div *ngIf="navigationMode === 'classic'" class="classic-mode">
+
+    <!-- Filtros -->
+    <div class="filters-section" *ngIf="allProducts.length > 0">
+      <div class="filters-grid">
+        <!-- Barra de búsqueda -->
+        <div class="search-box">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="applyFilters()"
+            placeholder="Buscar plantillas..."
+            class="search-input"
+          />
+          <span class="search-icon">🔍</span>
+        </div>
+
+        <!-- Filtro por categoría -->
+       <!--  <div class="filter-group">
+          <label>Categoría</label>
+          <div class="filter-options">
+            <button
+              *ngFor="let cat of categories"
+              [class.active]="selectedCategory === cat.id"
+              (click)="toggleCategory(cat.id)"
+              class="filter-btn category-btn"
+              [title]="getProductCountForCategory(cat.id) + ' plantillas'"
+            >
+              <span class="category-icon">{{cat.icon}}</span>
+              <span class="category-name">{{cat.name}}</span>
+              <span class="category-count" *ngIf="getProductCountForCategory(cat.id) > 0">
+                ({{getProductCountForCategory(cat.id)}})
+              </span>
+            </button>
+          </div>
+        </div> -->
+
+        <!-- Filtro por dificultad -->
+      <!--   <div class="filter-group">
+          <label>Dificultad</label>
+          <div class="filter-options">
+            <button
+              *ngFor="let diff of difficulties"
+              [class.active]="selectedDifficulty === diff.id"
+              (click)="toggleDifficulty(diff.id)"
+              class="filter-btn difficulty-btn"
+            >
+              {{diff.label}}
+            </button>
+          </div>
+        </div>
+ -->
+        <!-- Filtro por precio -->
+        <div class="filter-group">
+          <label>Precio máximo: {{maxPrice | number:'1.2-2'}} €</label>
+          <input
+            type="range"
+            [(ngModel)]="maxPrice"
+            (ngModelChange)="applyFilters()"
+            min="0"
+            max="20"
+            step="0.5"
+            class="price-slider"
+          />
+          <div class="price-range">
+            <span>0 €</span>
+            <span>20 €</span>
+          </div>
+        </div>
+
+        <!-- Botón reset -->
+        <div class="filter-actions">
+          <button (click)="resetFilters()" class="btn-reset">
+            ✕ Limpiar filtros
+          </button>
+        </div>
+      </div>
+
+      <!-- Resumen de resultados activos -->
+      <div class="active-filters" *ngIf="selectedCategory || selectedDifficulty || searchQuery || maxPrice < 20">
+        <span class="filter-label">Filtros activos:</span>
+        
+        <span class="filter-badge" *ngIf="selectedCategory">
+          {{getCategoryName(selectedCategory)}}
+          <button (click)="toggleCategory(selectedCategory)" class="filter-remove">×</button>
+        </span>
+        
+        <span class="filter-badge" *ngIf="selectedDifficulty">
+          <ng-container [ngSwitch]="selectedDifficulty">
+            <ng-container *ngSwitchCase="'easy'">Fácil</ng-container>
+            <ng-container *ngSwitchCase="'intermediate'">Intermedio</ng-container>
+            <ng-container *ngSwitchCase="'advanced'">Avanzado</ng-container>
+            <ng-container *ngSwitchDefault>{{ selectedDifficulty }}</ng-container>
+          </ng-container>
+          <button (click)="toggleDifficulty(selectedDifficulty)" class="filter-remove">×</button>
+        </span>
+        
+        <span class="filter-badge" *ngIf="searchQuery">
+          Busqueda: "{{searchQuery}}"
+          <button (click)="searchQuery = ''; applyFilters()" class="filter-remove">×</button>
+        </span>
+        
+        <span class="filter-badge" *ngIf="maxPrice < 20">
+          Precio ≤ {{maxPrice | number:'1.2-2'}}€
+          <button (click)="maxPrice = 20; applyFilters()" class="filter-remove">×</button>
+        </span>
+      </div>
+    </div>
+
+    <!-- Grid de productos -->
+    <div class="products-section">
+      <!-- Encabezado con resultados -->
+      <div class="products-header">
+        <div class="results-info">
+          <h2>
+            <span *ngIf="selectedCategory">{{getCategoryName(selectedCategory)}}</span>
+            <span *ngIf="!selectedCategory">Todas las</span>
+            plantillas
+          </h2>
+          <p class="results-count">
+            Mostrando {{showingStart}}-{{showingEnd}} de {{totalProducts}} resultados
+          </p>
+        </div>
+        
+        <div class="sort-options">
+          <label for="sortSelect">Ordenar por:</label>
+          <select 
+            [(ngModel)]="sortBy" 
+            (ngModelChange)="applyFilters()" 
+            class="sort-select"
+            id="sortSelect"
+          >
+            <option value="popular">Más populares</option>
+            <option value="rating">Mejor valoradas</option>
+            <option value="price_asc">Precio: menor a mayor</option>
+            <option value="price_desc">Precio: mayor a menor</option>
+            <option value="newest">Más recientes</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Estado de carga -->
+      <div *ngIf="allProducts.length === 0" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Cargando catálogo de plantillas...</p>
+      </div>
+
+      <!-- Grid de productos -->
+      <div *ngIf="filteredProducts.length > 0 && allProducts.length > 0; else noResults" class="products-grid">
+        <app-product-card
+          *ngFor="let product of filteredProducts"
+          [product]="product"
+          class="product-card-wrapper"
+        />
+      </div>
+
+      <!-- Sin resultados -->
+      <ng-template #noResults>
+        <div class="no-results">
+          <div class="paper-icon">📄</div>
+          <h3>No encontramos plantillas con esos filtros</h3>
+          <p>Intenta con otros criterios de búsqueda o <button (click)="resetFilters()" class="text-link">restablece los filtros</button>.</p>
+          
+          <div class="suggestions" *ngIf="allProducts.length > 0">
+            <p class="suggestion-title">También puedes explorar:</p>
+            <div class="suggestion-buttons">
+              <button 
+                *ngFor="let cat of categories | slice:0:3" 
+                (click)="toggleCategory(cat.id)"
+                class="suggestion-btn"
+              >
+                {{cat.icon}} {{cat.name}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+
+      <!-- Paginación -->
+      <div class="pagination" *ngIf="totalPages > 1 && allProducts.length > 0">
+        <button 
+          (click)="prevPage()" 
+          [disabled]="currentPage === 1" 
+          class="page-btn prev-btn"
+          [class.disabled]="currentPage === 1"
+        >
+          ← Anterior
+        </button>
+        
+        <div class="page-numbers">
+          <span class="page-info">
+            Página <strong>{{currentPage}}</strong> de <strong>{{totalPages}}</strong>
+          </span>
+          
+          <div class="page-dots">
+            <span *ngFor="let page of getPageNumbers()" 
+                  [class.active]="page === currentPage"
+                  (click)="goToPage(page)"
+                  class="page-dot">
+              {{page}}
+            </span>
+          </div>
+        </div>
+        
+        <button 
+          (click)="nextPage()" 
+          [disabled]="currentPage === totalPages" 
+          class="page-btn next-btn"
+          [class.disabled]="currentPage === totalPages"
+        >
+          Siguiente →
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modo Asistente -->
+  <div *ngIf="navigationMode === 'assistant'" class="assistant-mode">
+    <app-purchase-assistant 
+      (productsSelected)="onAssistantProductsSelected($event)">
+    </app-purchase-assistant>
+  </div>
+
+</div>

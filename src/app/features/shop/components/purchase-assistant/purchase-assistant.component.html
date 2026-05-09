@@ -1,0 +1,54 @@
+<!-- src/app/features/shop/components/purchase-assistant/purchase-assistant.component.html -->
+<div class="assistant-container">
+  
+  <!-- Progreso MOSTRANDO LAS PREGUNTAS COMPLETAS -->
+  <div class="progress-steps">
+    <div 
+      *ngFor="let step of stepQuestions; let i = index"
+      class="step-indicator"
+      [class.active]="i < selectedAnswers.length"
+      [class.current]="i === selectedAnswers.length">
+      <div class="step-number">{{i + 1}}</div>
+      <div class="step-label">{{step}}</div>
+    </div>
+  </div>
+
+  <!-- Pregunta actual (COMPLETA) -->
+  <div class="current-question">
+    <h3>{{currentQuestion}}</h3>
+    
+    <div class="options-grid">
+      <button
+        *ngFor="let option of currentOptions"
+        class="option-card"
+        (click)="selectOption(option.id)">
+        <div class="option-icon">{{option.icon}}</div>
+        <div class="option-label">{{option.label}}</div>
+      </button>
+    </div>
+
+    <!-- Navegación -->
+    <div class="assistant-nav">
+      <button 
+        *ngIf="selectedAnswers.length > 0"
+        (click)="goBack()" 
+        class="btn-secondary">
+        ← Atrás
+      </button>
+      
+      <button (click)="resetAssistant()" class="btn-link">
+        Reiniciar
+      </button>
+    </div>
+  </div>
+
+  <!-- Resumen de selecciones -->
+  <div class="selection-summary" *ngIf="hasSelections">
+    <h4>Tu selección:</h4>
+    <div class="summary-badges">
+      <span *ngFor="let selection of selectedAnswers" class="badge">
+        {{selection.question}}: {{selection.answer}}
+      </span>
+    </div>
+  </div>
+</div>
